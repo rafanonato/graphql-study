@@ -1,7 +1,10 @@
 const { books } = require("./books");
+const { user } = require("./users")
+
 const { gql, PubSub } = require("apollo-server");
 
 const BOOK_ADDED = 'BOOK_ADDED'
+const USER_ADD = 'USER_ADD'
 
 const pubsub = new PubSub();
 
@@ -13,12 +16,19 @@ const typeDefs = gql`
     author: String
   }
 
+  type User {
+    user: String
+    pass: String
+  }
+
   type Query {
     books: [Book]
+    user: [User]
   }
 
   type Mutation {
     addBook(title: String, author: String): Book
+    addUser(user:String, pass: String): User
   }
 
   type Subscription {
@@ -30,13 +40,20 @@ const typeDefs = gql`
 // schema.  We'll retrieve books from the "books" array above.
 const resolvers = {
   Query: {
-    books: () => books
+    books: () => books,
+    user: ()=> user
   },
   Mutation: {
     async addBook(_, { title, author }) {
       books.push({ title, author });
       await pubsub.publish(BOOK_ADDED, { bookAdded: { title, author } });
       return { title, author };
+    },
+
+    async addUser(_, { user, pass }) {
+      books.push({ user, pass });
+      await pubsub.publish(USER_ADD, { userAdded: { user, pass } });
+      return { user, pass };
     }
   },
   Subscription: {
